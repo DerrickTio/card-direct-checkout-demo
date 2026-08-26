@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Monster Card Checkout Demo</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+    background: #f5f6f8;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .field-hint {
+    font-size: 12px;
+    color: #666;
+    margin: -2px 0 6px;
+  }
+  .field-hint a {
+    color: #1a56db;
+  }
+  .env-banner {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7a5b00;
+    background: #fff8e1;
+    border: 1px solid #f0dfa0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: #333;
+  }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  input:focus {
+    outline: none;
+    border-color: #1a56db;
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+  }
+  .row > div {
+    flex: 1;
+  }
+  .checkout-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    background: #1a56db;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .checkout-btn:disabled {
+    background: #9db3e8;
+    cursor: not-allowed;
+  }
+  .checkout-btn:not(:disabled):hover {
+    background: #1546b3;
+  }
+  h2 {
+    font-size: 15px;
+    margin: 0 0 12px;
+    color: #333;
+  }
+  #responseBox {
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 12px;
+    min-height: 20px;
+  }
+  #responseBox.empty {
+    color: #999;
+  }
+  #responseBox.error {
+    background: #fdecea;
+    border-color: #f5c2c0;
+    color: #a13328;
+  }
+  #responseBox.success {
+    background: #eafaf0;
+    border-color: #b9e6c9;
+    color: #1a6b3c;
+  }
+  #requestBox {
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 12px;
+    min-height: 20px;
+  }
+  #requestBox.empty {
+    color: #999;
+  }
+  #iframeSection {
+    display: none;
+  }
+  .iframe-wrap {
+    position: relative;
+    width: 100%;
+    /* Responsive 3DS challenge area: tall enough on desktop, fills viewport-ish on mobile */
+    height: 70vh;
+    min-height: 480px;
+    max-height: 800px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .iframe-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  @media (max-width: 480px) {
+    .row {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Revenue Monster Card Checkout Demo</h1>
+<div class="subtitle">Sandbox test page for the card checkout + 3DS challenge flow.</div>
+<div class="env-banner">This page calls the Sandbox environment only.</div>
+
+<div class="card">
+  <label for="code">Code</label>
+  <div class="field-hint">
+    The checkout code from creating a checkout — see the
+    <a href="https://doc.revenuemonster.my/docs/v2/payment/online-payment#card-native" target="_blank" rel="noopener noreferrer">Card Native docs</a>.
+  </div>
+  <input type="text" id="code" placeholder="Enter Checkout Code" value="">
+
+  <label for="cardNumber">Card Number</label>
+  <input type="text" id="cardNumber" value="4111111111111111" inputmode="numeric" maxlength="16">
+
+  <label for="cardName">Name</label>
+  <input type="text" id="cardName" value="sandbox test card">
+
+  <div class="row">
+    <div>
+      <label for="expiryMonth">Expiry Month</label>
+      <input type="text" id="expiryMonth" value="11" inputmode="numeric" maxlength="2">
+    </div>
+    <div>
+      <label for="expiryYear">Expiry Year</label>
+      <input type="text" id="expiryYear" value="2029" inputmode="numeric" maxlength="4">
+    </div>
+  </div>
+
+  <label for="securityCode">Security Code</label>
+  <input type="text" id="securityCode" value="158" inputmode="numeric" maxlength="3">
+
+  <button type="button" class="checkout-btn" id="checkoutBtn">Checkout</button>
+</div>
+
+<div class="card">
+  <h2>Request Body</h2>
+  <div id="requestBox" class="empty">No request sent yet.</div>
+</div>
+
+<div class="card">
+  <h2>Response</h2>
+  <div id="responseBox" class="empty">No request sent yet.</div>
+</div>
+
+<div class="card" id="iframeSection">
+  <h2>3DS Challenge</h2>
+  <div class="iframe-wrap">
+    <iframe id="threeDsFrame" title="3DS Challenge"></iframe>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CHECKOUT_ENDPOINT = 'https://sb-card.revenuemonster.my/checkout';
+
+  var checkoutBtn = document.getElementById('checkoutBtn');
+  var requestBox = document.getElementById('requestBox');
+  var responseBox = document.getElementById('responseBox');
+  var iframeSection = document.getElementById('iframeSection');
+  var threeDsFrame = document.getElementById('threeDsFrame');
+
+  function setResponse(text, kind) {
+    responseBox.textContent = text;
+    responseBox.classList.remove('empty', 'error', 'success');
+    if (kind) {
+      responseBox.classList.add(kind);
+    }
+  }
+
+  function setRequest(text) {
+    requestBox.textContent = text;
+    requestBox.classList.toggle('empty', !text);
+  }
+
+  function hideIframe() {
+    iframeSection.style.display = 'none';
+    threeDsFrame.src = 'about:blank';
+  }
+
+  function showIframe(url) {
+    threeDsFrame.src = url;
+    iframeSection.style.display = 'block';
+    iframeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function extractErrorInfo(payload) {
+    if (!payload || typeof payload !== 'object') {
+      return '';
+    }
+    var parts = [];
+    if (payload.code) parts.push('code: ' + payload.code);
+    if (payload.message) parts.push('message: ' + payload.message);
+    if (payload.error) {
+      try {
+        parts.push('error: ' + JSON.stringify(payload.error));
+      } catch (e) {
+        parts.push('error: ' + String(payload.error));
+      }
+    }
+    if (payload.item && payload.item.message) parts.push('item.message: ' + payload.item.message);
+    return parts.join('\n');
+  }
+
+  checkoutBtn.addEventListener('click', function () {
+    hideIframe();
+
+    var code = document.getElementById('code').value.trim();
+    var cardNumber = document.getElementById('cardNumber').value.trim();
+    var cardName = document.getElementById('cardName').value.trim();
+    var expiryMonth = document.getElementById('expiryMonth').value.trim();
+    var expiryYear = document.getElementById('expiryYear').value.trim();
+    var securityCode = document.getElementById('securityCode').value.trim();
+
+    if (!code || !cardNumber || !cardName || !expiryMonth || !expiryYear || !securityCode) {
+      setResponse('Please fill in all fields (Checkout ID is required).', 'error');
+      return;
+    }
+
+    var body = {
+      code: code,
+      card: {
+        expiryYear: parseInt(expiryYear, 10),
+        expiryMonth: parseInt(expiryMonth, 10),
+        name: cardName,
+        no: cardNumber,
+        securityCode: securityCode
+      },
+      type: 'URL'
+    };
+
+    setRequest(JSON.stringify(body, null, 2));
+
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Processing...';
+    setResponse('Sending request to ' + CHECKOUT_ENDPOINT + ' ...', null);
+
+    fetch(CHECKOUT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(function (res) {
+        return res.text().then(function (rawText) {
+          return { ok: res.ok, status: res.status, statusText: res.statusText, rawText: rawText };
+        });
+      })
+      .then(function (result) {
+        var data;
+        try {
+          data = result.rawText ? JSON.parse(result.rawText) : {};
+        } catch (parseErr) {
+          setResponse(
+            'Invalid JSON response from server (HTTP ' + result.status + ').\n\n' +
+            'Raw response:\n' + result.rawText,
+            'error'
+          );
+          return;
+        }
+
+        if (!result.ok) {
+          var info = extractErrorInfo(data);
+          setResponse(
+            'HTTP error ' + result.status + ' ' + result.statusText +
+            (info ? '\n\n' + info : '\n\n' + JSON.stringify(data, null, 2)),
+            'error'
+          );
+          return;
+        }
+
+        if (data && data.code === 'SUCCESS' && data.item &&
+            data.item.action === '3DS_CHALLENGE' &&
+            data.item.type === 'URL' &&
+            data.item.url) {
+          setResponse(JSON.stringify(data, null, 2), 'success');
+          showIframe(data.item.url);
+          return;
+        }
+
+        var errInfo = extractErrorInfo(data);
+        setResponse(
+          'Unexpected response structure.' + (errInfo ? '\n\n' + errInfo : '') +
+          '\n\nFull response:\n' + JSON.stringify(data, null, 2),
+          'error'
+        );
+      })
+      .catch(function (networkErr) {
+        setResponse('Network error: ' + (networkErr && networkErr.message ? networkErr.message : String(networkErr)), 'error');
+      })
+      .finally(function () {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Checkout';
+      });
+  });
+})();
+</script>
+
+</body>
+</html>
