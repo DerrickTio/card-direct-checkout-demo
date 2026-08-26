@@ -8,7 +8,7 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    max-width: 640px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 24px 16px 64px;
     background: #f5f6f8;
@@ -23,12 +23,23 @@
     font-size: 13px;
     margin-bottom: 24px;
   }
+  .step-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(280px, 1.2fr);
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 860px) {
+    .step-row {
+      grid-template-columns: 1fr;
+    }
+  }
   .card {
     background: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px;
   }
   .field-hint {
     font-size: 12px;
@@ -48,6 +59,43 @@
     padding: 10px 14px;
     margin-bottom: 20px;
   }
+  .server-notice {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a4b8f;
+    background: #e8f0fe;
+    border: 1px solid #b9d3f8;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+  }
+  .server-notice code {
+    background: #d9e6fb;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
+  .flow-overview {
+    margin-bottom: 20px;
+  }
+  .flow-overview ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.6;
+  }
+  .flow-overview li + li {
+    margin-top: 6px;
+  }
+  .flow-overview code {
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
   label {
     display: block;
     font-size: 13px;
@@ -55,16 +103,35 @@
     margin: 14px 0 6px;
     color: #333;
   }
-  input {
+  input,
+  select {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: #1a1a1a;
   }
-  input:focus {
+  input:focus,
+  textarea:focus,
+  select:focus {
     outline: none;
     border-color: #1a56db;
+  }
+  input[readonly] {
+    background: #f5f6f8;
+    color: #555;
+  }
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    resize: vertical;
   }
   .row {
     display: flex;
@@ -97,7 +164,18 @@
     margin: 0 0 12px;
     color: #333;
   }
-  #responseBox {
+  .io-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 16px 0 6px;
+  }
+  .io-label:first-child {
+    margin-top: 0;
+  }
+  .code-box {
     font-size: 13px;
     white-space: pre-wrap;
     word-break: break-word;
@@ -106,33 +184,27 @@
     border-radius: 6px;
     padding: 12px;
     min-height: 20px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
-  #responseBox.empty {
+  .code-box.empty {
     color: #999;
+    font-family: inherit;
   }
-  #responseBox.error {
+  .code-box.error {
     background: #fdecea;
     border-color: #f5c2c0;
     color: #a13328;
   }
-  #responseBox.success {
+  .code-box.success {
     background: #eafaf0;
     border-color: #b9e6c9;
     color: #1a6b3c;
   }
-  #requestBox {
-    font-size: 13px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    padding: 12px;
-    min-height: 20px;
-  }
-  #requestBox.empty {
-    color: #999;
-  }
+  .json-key { color: #1a56db; }
+  .json-string { color: #1a6b3c; }
+  .json-number { color: #b45309; }
+  .json-boolean,
+  .json-null { color: #7c3aed; }
   #iframeSection {
     display: none;
   }
@@ -167,46 +239,196 @@
 <h1>Revenue Monster Card Checkout Demo</h1>
 <div class="subtitle">Sandbox test page for the card checkout + 3DS challenge flow.</div>
 <div class="env-banner">This page calls the Sandbox environment only.</div>
+<div class="server-notice">Steps 1–3 require <code>node server.js</code> running locally (proxies + signs the requests). Step 4 works standalone — it calls Revenue Monster directly from the browser.</div>
 
-<div class="card">
-  <label for="code">Code</label>
-  <div class="field-hint">
-    The checkout code from creating a checkout — see the
-    <a href="https://doc.revenuemonster.my/docs/v2/payment/online-payment#card-native" target="_blank" rel="noopener noreferrer">Card Native docs</a>.
-  </div>
-  <input type="text" id="code" placeholder="Enter Checkout Code" value="">
-
-  <label for="cardNumber">Card Number</label>
-  <input type="text" id="cardNumber" value="4111111111111111" inputmode="numeric" maxlength="16">
-
-  <label for="cardName">Name</label>
-  <input type="text" id="cardName" value="sandbox test card">
-
-  <div class="row">
-    <div>
-      <label for="expiryMonth">Expiry Month</label>
-      <input type="text" id="expiryMonth" value="11" inputmode="numeric" maxlength="2">
-    </div>
-    <div>
-      <label for="expiryYear">Expiry Year</label>
-      <input type="text" id="expiryYear" value="2029" inputmode="numeric" maxlength="4">
-    </div>
-  </div>
-
-  <label for="securityCode">Security Code</label>
-  <input type="text" id="securityCode" value="158" inputmode="numeric" maxlength="3">
-
-  <button type="button" class="checkout-btn" id="checkoutBtn">Checkout</button>
+<div class="card flow-overview">
+  <h2>4-Step Flow</h2>
+  <ol>
+    <li><strong>Get Access Token</strong> — OAuth client credentials (Basic auth: Client ID + Client Secret, base64). Fills the Bearer Token field, used by steps 2–3.</li>
+    <li><strong>Create Order</strong> — creates the order under the selected Store ID. Fills the Order Checkout ID field, used by step 3.</li>
+    <li><strong>Get Checkout Code</strong> — selects the payment method (hardcoded to <code>MASTERCARD_MY</code>) for that order. Fills the Checkout Code field, used by step 4.</li>
+    <li><strong>Card Checkout</strong> — submits card details against the checkout code. On success, opens the 3DS challenge in the iframe below.</li>
+  </ol>
 </div>
 
-<div class="card">
-  <h2>Request Body</h2>
-  <div id="requestBox" class="empty">No request sent yet.</div>
+<div class="step-row" id="step1Row">
+  <div class="card">
+    <h2>1. Get Access Token</h2>
+
+    <label for="clientId">Client ID</label>
+    <input type="text" id="clientId" placeholder="Enter Client ID" value="">
+
+    <label for="clientSecret">Client Secret</label>
+    <input type="text" id="clientSecret" placeholder="Enter Client Secret" value="">
+
+    <label for="basicAuthPreview">Authorization (Basic)</label>
+    <div class="field-hint">Joined as "Client ID:Client Secret", then base64-encoded — this is the value sent as the Authorization header for this step.</div>
+    <input type="text" id="basicAuthPreview" readonly placeholder="Fills in as you type Client ID / Client Secret above">
+
+    <label for="privateKey">Private Key (PEM)</label>
+    <div class="field-hint">Used to sign X-Signature for all three calls below. Signing happens in the local server, never sent to RM.</div>
+    <textarea id="privateKey" rows="5" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+
+    <button type="button" class="checkout-btn" id="getTokenBtn">Get Token</button>
+
+    <label for="bearerToken">Bearer Token</label>
+    <div class="field-hint">Auto-filled from the response. Editable — paste in an existing token to skip this step.</div>
+    <textarea id="bearerToken" rows="3" placeholder="Filled in automatically after Get Token"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="io-label">Request</div>
+    <div id="tokenRequestBox" class="code-box empty">No request sent yet.</div>
+    <div class="io-label">Response</div>
+    <div id="tokenResponseBox" class="code-box empty">No request sent yet.</div>
+  </div>
 </div>
 
-<div class="card">
-  <h2>Response</h2>
-  <div id="responseBox" class="empty">No request sent yet.</div>
+<div class="step-row" id="step2Row">
+  <div class="card">
+    <h2>2. Create Order</h2>
+
+    <label for="storeId">Store ID</label>
+    <div class="field-hint">Populated automatically from your active stores after Get Token succeeds.</div>
+    <select id="storeId">
+      <option value="">-- Get Token first --</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label for="orderTitle">Order Title</label>
+        <input type="text" id="orderTitle" value="Pay to Sandbox">
+      </div>
+      <div>
+        <label for="orderAmount">Amount (sen)</label>
+        <input type="text" id="orderAmount" value="100" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="redirectUrl">Redirect URL</label>
+        <input type="text" id="redirectUrl" value="https://example.com/payment/redirect">
+      </div>
+      <div>
+        <label for="notifyUrl">Notify URL</label>
+        <input type="text" id="notifyUrl" value="https://example.com/payment/notify">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="orderId">Order ID</label>
+        <div class="field-hint">Timestamp, generated on click.</div>
+        <input type="text" id="orderId" readonly placeholder="Generated on Create Order">
+      </div>
+      <div>
+        <label for="orderCurrencyType">Currency Type</label>
+        <div class="field-hint">Hardcoded.</div>
+        <input type="text" id="orderCurrencyType" value="MYR" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="orderType">Type</label>
+        <div class="field-hint">Hardcoded.</div>
+        <input type="text" id="orderType" value="WEB_PAYMENT" readonly>
+      </div>
+      <div>
+        <label for="orderLayoutVersion">Layout Version</label>
+        <div class="field-hint">Hardcoded.</div>
+        <input type="text" id="orderLayoutVersion" value="v4" readonly>
+      </div>
+    </div>
+
+    <button type="button" class="checkout-btn" id="createOrderBtn">Create Order</button>
+
+    <label for="orderCheckoutId">Order Checkout ID</label>
+    <div class="field-hint">Auto-filled from the response. Used as input for step 3.</div>
+    <input type="text" id="orderCheckoutId" placeholder="Filled in automatically after Create Order" value="">
+  </div>
+
+  <div class="card">
+    <div class="io-label">Request</div>
+    <div id="orderRequestBox" class="code-box empty">No request sent yet.</div>
+    <div class="io-label">Response</div>
+    <div id="orderResponseBox" class="code-box empty">No request sent yet.</div>
+  </div>
+</div>
+
+<div class="step-row" id="step3Row">
+  <div class="card">
+    <h2>3. Get Checkout Code</h2>
+
+    <label for="checkoutCodeCheckoutId">Checkout ID</label>
+    <div class="field-hint">Mirrors Order Checkout ID from step 2.</div>
+    <input type="text" id="checkoutCodeCheckoutId" readonly>
+
+    <label for="checkoutMethod">Method</label>
+    <div class="field-hint">Hardcoded for this card checkout demo.</div>
+    <input type="text" id="checkoutMethod" value="MASTERCARD_MY" readonly>
+
+    <label for="checkoutType">Type</label>
+    <div class="field-hint">Hardcoded.</div>
+    <input type="text" id="checkoutType" value="URL" readonly>
+
+    <button type="button" class="checkout-btn" id="getCheckoutCodeBtn">Get Checkout Code</button>
+
+    <label for="checkoutCode">Checkout Code</label>
+    <div class="field-hint">Auto-filled from the response. Also auto-fills the Code field in step 4.</div>
+    <input type="text" id="checkoutCode" readonly>
+  </div>
+
+  <div class="card">
+    <div class="io-label">Request</div>
+    <div id="checkoutCodeRequestBox" class="code-box empty">No request sent yet.</div>
+    <div class="io-label">Response</div>
+    <div id="checkoutCodeResponseBox" class="code-box empty">No request sent yet.</div>
+  </div>
+</div>
+
+<div class="step-row" id="step4Row">
+  <div class="card">
+    <h2>4. Card Checkout</h2>
+
+    <label for="code">Code</label>
+    <div class="field-hint">
+      The checkout code from creating a checkout — see the
+      <a href="https://doc.revenuemonster.my/docs/v2/payment/online-payment#card-native" target="_blank" rel="noopener noreferrer">Card Native docs</a>.
+      Auto-filled after step 3 succeeds, or paste one in directly.
+    </div>
+    <input type="text" id="code" placeholder="Enter Checkout Code" value="">
+
+    <label for="cardNumber">Card Number</label>
+    <input type="text" id="cardNumber" value="4111111111111111" inputmode="numeric" maxlength="16">
+
+    <label for="cardName">Name</label>
+    <input type="text" id="cardName" value="sandbox test card">
+
+    <div class="row">
+      <div>
+        <label for="expiryMonth">Expiry Month</label>
+        <input type="text" id="expiryMonth" value="11" inputmode="numeric" maxlength="2">
+      </div>
+      <div>
+        <label for="expiryYear">Expiry Year</label>
+        <input type="text" id="expiryYear" value="2029" inputmode="numeric" maxlength="4">
+      </div>
+    </div>
+
+    <label for="securityCode">Security Code</label>
+    <input type="text" id="securityCode" value="158" inputmode="numeric" maxlength="3">
+
+    <button type="button" class="checkout-btn" id="checkoutBtn">Checkout</button>
+  </div>
+
+  <div class="card">
+    <div class="io-label">Request</div>
+    <div id="requestBox" class="code-box empty">No request sent yet.</div>
+    <div class="io-label">Response</div>
+    <div id="responseBox" class="code-box empty">No request sent yet.</div>
+  </div>
 </div>
 
 <div class="card" id="iframeSection">
@@ -220,36 +442,102 @@
 (function () {
   var CHECKOUT_ENDPOINT = 'https://sb-card.revenuemonster.my/checkout';
 
-  var checkoutBtn = document.getElementById('checkoutBtn');
-  var requestBox = document.getElementById('requestBox');
-  var responseBox = document.getElementById('responseBox');
+  var TOKEN_ENDPOINT = '/api/token';
+  var TOKEN_DISPLAY_URL = 'https://sb-oauth.revenuemonster.my/v1/token';
+
+  var ORDER_ENDPOINT = '/api/order';
+  var ORDER_DISPLAY_URL = 'https://sb-open.revenuemonster.my/v3/payment/online';
+
+  var ORDER_CHECKOUT_ENDPOINT = '/api/order-checkout';
+  var ORDER_CHECKOUT_DISPLAY_URL = 'https://sb-open.revenuemonster.my/v3/payment/online/checkout';
+
+  var STORES_ENDPOINT = '/api/stores';
+
+  var BEARER_AUTH_LINE = 'Bearer <Bearer Token>';
+
+  // Builds the base64(clientId:clientSecret) value used for HTTP Basic auth.
+  function computeBasicAuthBase64(clientId, clientSecret) {
+    if (!clientId || !clientSecret) return '';
+    return btoa(clientId + ':' + clientSecret);
+  }
+
+  // Formats the text shown in a step's Request panel.
+  function buildRequestLog(url, authLine, body) {
+    return 'POST ' + url + '\nAuth Type: ' + authLine + '\n\n' + JSON.stringify(body, null, 2);
+  }
+
   var iframeSection = document.getElementById('iframeSection');
   var threeDsFrame = document.getElementById('threeDsFrame');
+  var codeInput = document.getElementById('code');
 
-  function setResponse(text, kind) {
-    responseBox.textContent = text;
-    responseBox.classList.remove('empty', 'error', 'success');
-    if (kind) {
-      responseBox.classList.add(kind);
+  // Escapes &, <, > so raw text is safe to inject as innerHTML.
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Wraps JSON tokens (keys, strings, numbers, booleans, null) in colored spans.
+  function highlightJson(text) {
+    var escaped = escapeHtml(text);
+    return escaped.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      function (match) {
+        var cls = 'json-number';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'json-key' : 'json-string';
+        } else if (/^(true|false)$/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/^null$/.test(match)) {
+          cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      }
+    );
+  }
+
+  // Creates a request/response panel pair with setRequest/setResponse setters.
+  function makeBoxPair(requestEl, responseEl) {
+    // Updates one panel's text/HTML and empty/error/success styling.
+    function setBox(el, text, kind, isJson) {
+      if (isJson) {
+        el.innerHTML = highlightJson(text);
+      } else {
+        el.textContent = text;
+      }
+      el.classList.remove('empty', 'error', 'success');
+      if (kind) el.classList.add(kind);
+      el.classList.toggle('empty', !text);
     }
+    return {
+      setRequest: function (text) { setBox(requestEl, text, null, true); },
+      setResponse: function (text, kind, isJson) { setBox(responseEl, text, kind, !!isJson); }
+    };
   }
 
-  function setRequest(text) {
-    requestBox.textContent = text;
-    requestBox.classList.toggle('empty', !text);
+  var tokenBoxes = makeBoxPair(document.getElementById('tokenRequestBox'), document.getElementById('tokenResponseBox'));
+  var orderBoxes = makeBoxPair(document.getElementById('orderRequestBox'), document.getElementById('orderResponseBox'));
+  var checkoutCodeBoxes = makeBoxPair(document.getElementById('checkoutCodeRequestBox'), document.getElementById('checkoutCodeResponseBox'));
+  var cardCheckoutBoxes = makeBoxPair(document.getElementById('requestBox'), document.getElementById('responseBox'));
+
+  // Smooth-scrolls the page to the given step's row.
+  function scrollToStep(id) {
+    var el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // Hides the 3DS challenge iframe and resets its src.
   function hideIframe() {
     iframeSection.style.display = 'none';
     threeDsFrame.src = 'about:blank';
   }
 
+  // Loads the 3DS challenge URL into the iframe and reveals it.
   function showIframe(url) {
     threeDsFrame.src = url;
     iframeSection.style.display = 'block';
     iframeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // Pulls a human-readable summary out of an RM error response body.
   function extractErrorInfo(payload) {
     if (!payload || typeof payload !== 'object') {
       return '';
@@ -268,18 +556,237 @@
     return parts.join('\n');
   }
 
+  // Parses a fetch Response as JSON, throwing a readable Error on failure.
+  function parseProxyResponse(res) {
+    return res.text().then(function (rawText) {
+      var data;
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch (parseErr) {
+        throw new Error('Invalid JSON response from server (HTTP ' + res.status + ').\n\nRaw response:\n' + rawText);
+      }
+      if (!res.ok) {
+        var info = extractErrorInfo(data);
+        throw new Error(
+          'HTTP error ' + res.status + ' ' + res.statusText +
+          (info ? '\n\n' + info : '\n\n' + JSON.stringify(data, null, 2))
+        );
+      }
+      return data;
+    });
+  }
+
+  // POSTs an auth+privateKey+body envelope to a local proxy route.
+  function postToProxy(url, authFields, privateKey, body) {
+    var envelope = Object.assign({ privateKey: privateKey, body: body }, authFields);
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(envelope)
+    }).then(parseProxyResponse);
+  }
+
+  // Runs an async step: toggles the button's busy state and reports errors.
+  function runStep(btn, busyText, idleText, boxes, fn) {
+    btn.disabled = true;
+    btn.textContent = busyText;
+    fn()
+      .catch(function (err) {
+        boxes.setResponse(err && err.message ? err.message : String(err), 'error', false);
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = idleText;
+      });
+  }
+
+  // Validates that all given values are non-empty, else shows an error.
+  function requireFields(boxes, values, message) {
+    if (values.some(function (v) { return !v; })) {
+      boxes.setResponse(message, 'error', false);
+      return false;
+    }
+    return true;
+  }
+
+  var getTokenBtn = document.getElementById('getTokenBtn');
+  var createOrderBtn = document.getElementById('createOrderBtn');
+  var getCheckoutCodeBtn = document.getElementById('getCheckoutCodeBtn');
+  var checkoutBtn = document.getElementById('checkoutBtn');
+
+  var orderCheckoutIdInput = document.getElementById('orderCheckoutId');
+  var checkoutCodeCheckoutIdInput = document.getElementById('checkoutCodeCheckoutId');
+
+  // Mirrors the Order Checkout ID into step 3's readonly Checkout ID field.
+  function syncCheckoutId() {
+    checkoutCodeCheckoutIdInput.value = orderCheckoutIdInput.value;
+  }
+  orderCheckoutIdInput.addEventListener('input', syncCheckoutId);
+
+  var clientIdInput = document.getElementById('clientId');
+  var clientSecretInput = document.getElementById('clientSecret');
+  var basicAuthPreviewInput = document.getElementById('basicAuthPreview');
+  var privateKeyInput = document.getElementById('privateKey');
+  var bearerTokenInput = document.getElementById('bearerToken');
+
+  // Recomputes the live Basic-auth base64 preview as Client ID/Secret change.
+  function syncBasicAuthPreview() {
+    basicAuthPreviewInput.value = computeBasicAuthBase64(clientIdInput.value.trim(), clientSecretInput.value.trim());
+  }
+  clientIdInput.addEventListener('input', syncBasicAuthPreview);
+  clientSecretInput.addEventListener('input', syncBasicAuthPreview);
+
+  // Loads the merchant's active stores and populates the Store ID dropdown.
+  function fetchStores(token, privateKey) {
+    var storeSelect = document.getElementById('storeId');
+    storeSelect.innerHTML = '<option value="">Loading stores...</option>';
+    return postToProxy(STORES_ENDPOINT, { token: token }, privateKey, {})
+      .then(function (data) {
+        var stores = (data && data.items) || [];
+        var active = stores.filter(function (s) { return s && s.status === 'ACTIVE'; });
+        if (!active.length) {
+          storeSelect.innerHTML = '<option value="">No active stores found</option>';
+          return;
+        }
+        storeSelect.innerHTML = active.map(function (s) {
+          return '<option value="' + escapeHtml(s.id) + '">' + escapeHtml(s.name) + ' (' + escapeHtml(s.id) + ')</option>';
+        }).join('');
+      })
+      .catch(function () {
+        storeSelect.innerHTML = '<option value="">Failed to load stores</option>';
+      });
+  }
+
+  // Step 1: fetch an access token, then trigger step 2's store list.
+  getTokenBtn.addEventListener('click', function () {
+    var clientId = clientIdInput.value.trim();
+    var clientSecret = clientSecretInput.value.trim();
+    var privateKey = privateKeyInput.value.trim();
+
+    if (!requireFields(tokenBoxes, [clientId, clientSecret, privateKey], 'Please fill in Client ID, Client Secret and Private Key.')) {
+      return;
+    }
+
+    var tokenBody = { grantType: 'client_credentials' };
+    var basicAuthLine = 'Basic ' + computeBasicAuthBase64(clientId, clientSecret);
+    tokenBoxes.setRequest(buildRequestLog(TOKEN_DISPLAY_URL, basicAuthLine, tokenBody));
+    tokenBoxes.setResponse('Fetching access token...', null, false);
+
+    runStep(getTokenBtn, 'Processing...', 'Get Token', tokenBoxes, function () {
+      return postToProxy(TOKEN_ENDPOINT, { clientId: clientId, clientSecret: clientSecret }, privateKey, tokenBody)
+        .then(function (tokenData) {
+          var token = tokenData && tokenData.accessToken;
+          if (!token) {
+            throw new Error('No accessToken in token response.\n\nFull response:\n' + JSON.stringify(tokenData, null, 2));
+          }
+          bearerTokenInput.value = token;
+          tokenBoxes.setResponse(JSON.stringify(tokenData, null, 2), 'success', true);
+          scrollToStep('step2Row');
+          return fetchStores(token, privateKey);
+        });
+    });
+  });
+
+  // Step 2: create the order and capture its checkout ID.
+  createOrderBtn.addEventListener('click', function () {
+    var token = bearerTokenInput.value.trim();
+    var privateKey = privateKeyInput.value.trim();
+    var storeId = document.getElementById('storeId').value.trim();
+    var title = document.getElementById('orderTitle').value.trim();
+    var amount = document.getElementById('orderAmount').value.trim();
+    var redirectUrl = document.getElementById('redirectUrl').value.trim();
+    var notifyUrl = document.getElementById('notifyUrl').value.trim();
+
+    if (!requireFields(orderBoxes, [token, privateKey, storeId, title, amount, redirectUrl, notifyUrl], 'Please fill in Bearer Token, Private Key and all order fields.')) {
+      return;
+    }
+
+    var orderId = String(Date.now());
+    document.getElementById('orderId').value = orderId;
+    var currencyType = document.getElementById('orderCurrencyType').value;
+    var orderType = document.getElementById('orderType').value;
+    var layoutVersion = document.getElementById('orderLayoutVersion').value;
+
+    var orderBody = {
+      order: {
+        id: orderId,
+        title: title,
+        currencyType: currencyType,
+        amount: parseInt(amount, 10)
+      },
+      redirectUrl: redirectUrl,
+      notifyUrl: notifyUrl,
+      type: orderType,
+      storeId: storeId,
+      layoutVersion: layoutVersion
+    };
+
+    orderBoxes.setRequest(buildRequestLog(ORDER_DISPLAY_URL, BEARER_AUTH_LINE, orderBody));
+    orderBoxes.setResponse('Creating order...', null, false);
+
+    runStep(createOrderBtn, 'Processing...', 'Create Order', orderBoxes, function () {
+      return postToProxy(ORDER_ENDPOINT, { token: token }, privateKey, orderBody)
+        .then(function (orderData) {
+          var orderCheckoutId = orderData && orderData.item && orderData.item.checkoutId;
+          if (!orderCheckoutId) {
+            throw new Error('No checkoutId in order response.\n\nFull response:\n' + JSON.stringify(orderData, null, 2));
+          }
+          orderCheckoutIdInput.value = orderCheckoutId;
+          syncCheckoutId();
+          orderBoxes.setResponse(JSON.stringify(orderData, null, 2), 'success', true);
+          scrollToStep('step3Row');
+        });
+    });
+  });
+
+  // Step 3: exchange the order checkout ID for a card checkout code.
+  getCheckoutCodeBtn.addEventListener('click', function () {
+    var token = bearerTokenInput.value.trim();
+    var privateKey = privateKeyInput.value.trim();
+    var checkoutId = checkoutCodeCheckoutIdInput.value.trim();
+    var method = document.getElementById('checkoutMethod').value.trim();
+    var type = document.getElementById('checkoutType').value.trim();
+
+    if (!requireFields(checkoutCodeBoxes, [token, privateKey, checkoutId], 'Please fill in Bearer Token, Private Key and Checkout ID.')) {
+      return;
+    }
+
+    var checkoutBody = {
+      checkoutId: checkoutId,
+      method: method,
+      type: type
+    };
+
+    checkoutCodeBoxes.setRequest(buildRequestLog(ORDER_CHECKOUT_DISPLAY_URL, BEARER_AUTH_LINE, checkoutBody));
+    checkoutCodeBoxes.setResponse('Getting checkout code...', null, false);
+
+    runStep(getCheckoutCodeBtn, 'Processing...', 'Get Checkout Code', checkoutCodeBoxes, function () {
+      return postToProxy(ORDER_CHECKOUT_ENDPOINT, { token: token }, privateKey, checkoutBody)
+        .then(function (checkoutData) {
+          var finalCheckoutId = checkoutData && checkoutData.item && checkoutData.item.checkoutId;
+          if (!finalCheckoutId) {
+            throw new Error('No checkoutId in checkout response.\n\nFull response:\n' + JSON.stringify(checkoutData, null, 2));
+          }
+          document.getElementById('checkoutCode').value = finalCheckoutId;
+          codeInput.value = finalCheckoutId;
+          checkoutCodeBoxes.setResponse(JSON.stringify(checkoutData, null, 2), 'success', true);
+          scrollToStep('step4Row');
+        });
+    });
+  });
+
+  // Step 4: submit card details and open the 3DS challenge on success.
   checkoutBtn.addEventListener('click', function () {
     hideIframe();
 
-    var code = document.getElementById('code').value.trim();
+    var code = codeInput.value.trim();
     var cardNumber = document.getElementById('cardNumber').value.trim();
     var cardName = document.getElementById('cardName').value.trim();
     var expiryMonth = document.getElementById('expiryMonth').value.trim();
     var expiryYear = document.getElementById('expiryYear').value.trim();
     var securityCode = document.getElementById('securityCode').value.trim();
 
-    if (!code || !cardNumber || !cardName || !expiryMonth || !expiryYear || !securityCode) {
-      setResponse('Please fill in all fields (Checkout ID is required).', 'error');
+    if (!requireFields(cardCheckoutBoxes, [code, cardNumber, cardName, expiryMonth, expiryYear, securityCode], 'Please fill in all fields (Checkout ID is required).')) {
       return;
     }
 
@@ -295,68 +802,32 @@
       type: 'URL'
     };
 
-    setRequest(JSON.stringify(body, null, 2));
+    cardCheckoutBoxes.setRequest(buildRequestLog(CHECKOUT_ENDPOINT, 'None (direct browser call, CORS-enabled)', body));
+    cardCheckoutBoxes.setResponse('Sending request to ' + CHECKOUT_ENDPOINT + ' ...', null, false);
 
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Processing...';
-    setResponse('Sending request to ' + CHECKOUT_ENDPOINT + ' ...', null);
-
-    fetch(CHECKOUT_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-      .then(function (res) {
-        return res.text().then(function (rawText) {
-          return { ok: res.ok, status: res.status, statusText: res.statusText, rawText: rawText };
+    runStep(checkoutBtn, 'Processing...', 'Checkout', cardCheckoutBoxes, function () {
+      return fetch(CHECKOUT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(parseProxyResponse)
+        .then(function (data) {
+          if (data && data.code === 'SUCCESS' && data.item &&
+              data.item.action === '3DS_CHALLENGE' &&
+              data.item.type === 'URL' &&
+              data.item.url) {
+            cardCheckoutBoxes.setResponse(JSON.stringify(data, null, 2), 'success', true);
+            showIframe(data.item.url);
+            return;
+          }
+          var errInfo = extractErrorInfo(data);
+          throw new Error(
+            'Unexpected response structure.' + (errInfo ? '\n\n' + errInfo : '') +
+            '\n\nFull response:\n' + JSON.stringify(data, null, 2)
+          );
         });
-      })
-      .then(function (result) {
-        var data;
-        try {
-          data = result.rawText ? JSON.parse(result.rawText) : {};
-        } catch (parseErr) {
-          setResponse(
-            'Invalid JSON response from server (HTTP ' + result.status + ').\n\n' +
-            'Raw response:\n' + result.rawText,
-            'error'
-          );
-          return;
-        }
-
-        if (!result.ok) {
-          var info = extractErrorInfo(data);
-          setResponse(
-            'HTTP error ' + result.status + ' ' + result.statusText +
-            (info ? '\n\n' + info : '\n\n' + JSON.stringify(data, null, 2)),
-            'error'
-          );
-          return;
-        }
-
-        if (data && data.code === 'SUCCESS' && data.item &&
-            data.item.action === '3DS_CHALLENGE' &&
-            data.item.type === 'URL' &&
-            data.item.url) {
-          setResponse(JSON.stringify(data, null, 2), 'success');
-          showIframe(data.item.url);
-          return;
-        }
-
-        var errInfo = extractErrorInfo(data);
-        setResponse(
-          'Unexpected response structure.' + (errInfo ? '\n\n' + errInfo : '') +
-          '\n\nFull response:\n' + JSON.stringify(data, null, 2),
-          'error'
-        );
-      })
-      .catch(function (networkErr) {
-        setResponse('Network error: ' + (networkErr && networkErr.message ? networkErr.message : String(networkErr)), 'error');
-      })
-      .finally(function () {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = 'Checkout';
-      });
+    });
   });
 })();
 </script>
